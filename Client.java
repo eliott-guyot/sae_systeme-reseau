@@ -2,97 +2,52 @@ import java.io.*;
 import java.net.*;
 
 public class Client {
-    private static boolean invitationAccepted = false;  // Indicateur pour savoir si l'invitation a été acceptée
+    private final String adresseServeur;
+    private final int portServeur;
 
-    public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage : java Client <adresse_ip> <port> <nom_joueur>");
-            return;
-        }
+    public Client(String adresseServeur, int portServeur) {
+        this.adresseServeur = adresseServeur;
+        this.portServeur = portServeur;
+    }
 
-        String host = args[0];
-        int port = Integer.parseInt(args[1]);
-        String playerName = args[2];
+    public void demarrer() {
+        try (Socket socket = new Socket(adresseServeur, portServeur);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader console = new BufferedReader(new InputStreamReader(System.in))) {
 
-        try (Socket socket = new Socket(host, port);
-             BufferedReader serverInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter serverOutput = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-             BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in))) {
+            System.out.println("Connecté au serveur.");
 
-            // Recevoir message de bienvenue et entrer le nom
-            System.out.println(serverInput.readLine()); // "Bienvenue ! Entrez votre nom :"
-            serverOutput.write(playerName);
-            serverOutput.newLine();
-            serverOutput.flush();
-
-            // Réponse du serveur après l'enregistrement
-            String response = serverInput.readLine();
-            System.out.println(response);
-
-            if (response.contains("Déconnexion")) {
-                return;
-            }
-
-            // Liste des joueurs connectés
-            System.out.println("Joueurs disponibles :");
-            while (!(response = serverInput.readLine()).isEmpty()) {
-                System.out.println(response);
-            }
-
-            // Thread pour écouter les messages du serveur
-            Thread listenerThread = new Thread(() -> {
+            // Création d'un thread pour écouter les messages du serveur
+            Thread ecouteur = new Thread(() -> {
+                String messageServeur;
                 try {
-                    String serverMessage;
-                    while ((serverMessage = serverInput.readLine()) != null) {
-                        System.out.println(serverMessage);
-                        // Vérifier si l'invitation est acceptée ou refusée
-                        if (serverMessage.contains("a accepté votre invitation")) {
-                            invitationAccepted = true;
-                        }
+                    while ((messageServeur = in.readLine()) != null) {
+                        System.out.println(messageServeur);
                     }
                 } catch (IOException e) {
-                    System.out.println("Connexion perdue avec le serveur.");
+                    System.err.println("Déconnecté du serveur.");
                 }
             });
+            ecouteur.start();
 
-            listenerThread.start();
-
-            // Boucle principale pour envoyer des commandes
-            while (true) {
-                System.out.print("Entrez une commande (nom_joueur pour inviter, 'quit' pour quitter) : ");
-                String command = userInput.readLine();
-
-                serverOutput.write(command);
-                serverOutput.newLine();
-                serverOutput.flush();
-
-                if (command.equalsIgnoreCase("quit")) {
+            // Envoi des messages au serveur
+            String messageUtilisateur;
+            while ((messageUtilisateur = console.readLine()) != null) {
+                out.println(messageUtilisateur);
+                if (messageUtilisateur.equalsIgnoreCase("quit")) {
                     break;
                 }
-
-                // Si une invitation est envoyée
-                if (command.matches("\\w+")) {
-                    System.out.println("Invitation envoyée. Attente d'une réponse...");
-                    // Attendre que l'invitation soit acceptée ou refusée
-                    while (!invitationAccepted) {
-                        // On peut afficher un message ou juste attendre que le message de réponse arrive
-                        Thread.sleep(100); // Eviter un blocage total, on laisse le thread d'écoute répondre
-                    }
-
-                    if (invitationAccepted) {
-                        System.out.println("L'invitation a été acceptée. Vous êtes maintenant en partie !");
-                    } else {
-                        System.out.println("L'invitation a été refusée.");
-                    }
-
-                    // Réinitialiser l'état pour la prochaine invitation
-                    invitationAccepted = false;
-                }
             }
-
-            listenerThread.join();
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Erreur de communication avec le serveur : " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la connexion au serveur : " + e.getMessage());
         }
+    }
+
+    public static void main(String[] args) {
+        String adresseServeur = "localhost";
+        int portServeur = 12345;
+        Client client = new Client(adresseServeur, portServeur);
+        client.demarrer();
     }
 }
