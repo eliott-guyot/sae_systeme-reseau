@@ -1,79 +1,81 @@
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 
-class ClientHandler implements Runnable {
-    private final Socket socket;
-    private final Serveur serveur;
-    private String nom;
-    private BufferedReader in;
+public class ClientHandler extends Thread {
+    private Socket clientSocket;
+    private Serveur server;
     private PrintWriter out;
+    private BufferedReader in;
+    private String pseudo;
 
-    public ClientHandler(Socket socket, Serveur serveur) {
-        this.socket = socket;
-        this.serveur = serveur;
+    public ClientHandler(Socket clientSocket, Serveur server) {
+        this.clientSocket = clientSocket;
+        this.server = server;
     }
 
     @Override
     public void run() {
         try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            // Demande du nom du client
-            out.println("Entrez votre nom :");
-            nom = in.readLine();
-
-            if (nom == null || nom.trim().isEmpty() || !serveur.ajouterClient(nom, this)) {
-                out.println("Nom invalide ou déjà utilisé. Fermeture de la connexion.");
-                return;
-            }
+            out.println("Entrez votre pseudo :");
+            pseudo = in.readLine();
+            server.registerClient(this, pseudo);
 
             String message;
             while ((message = in.readLine()) != null) {
-                if (message.equalsIgnoreCase("quit")) {
-                    out.println("Au revoir !");
-                    break;
-                } else if (message.startsWith("play")) {
-                    String[] parts = message.split(" ", 2);
-                    if (parts.length > 1) {
-                        String nomAdversaire = parts[1];
-                        ClientHandler adversaire = serveur.obtenirClient(nomAdversaire);
-                        if (adversaire != null) {
-                            // Envoie une invitation au joueur cible
-                            serveur.envoyerInvitation(nom, nomAdversaire);
-                        } else {
-                            out.println("Joueur " + nomAdversaire + " introuvable.");
-                        }
-                    } else {
-                        out.println("Commande 'play' invalide.");
-                    }
-                } else if (message.equalsIgnoreCase("accepter")) {
-                    out.println("Vous avez accepté l'invitation !");
-                    // Notifie l'envoyeur que l'invitation a été acceptée
-                    serveur.informerEnvoyeur(nom, nom, true);
-                } else if (message.equalsIgnoreCase("refuser")) {
-                    out.println("Vous avez refusé l'invitation.");
-                    // Notifie l'envoyeur que l'invitation a été refusée
-                    serveur.informerEnvoyeur(nom, nom, false);
-                } else {
-                    serveur.diffuser(nom + " : " + message);
-                }
+                handleMessage(message);
             }
         } catch (IOException e) {
-            System.err.println("Erreur avec le client " + nom + " : " + e.getMessage());
+            System.out.println("Erreur avec le client " + pseudo);
         } finally {
-            if (nom != null) {
-                serveur.supprimerClient(nom);
-            }
-            try {
-                socket.close();
-            } catch (IOException e) {
-                System.err.println("Erreur lors de la fermeture du socket pour " + nom + " : " + e.getMessage());
-            }
+            disconnect();
         }
     }
 
-    public void envoyerMessage(String message) {
+    private void handleMessage(String message) {
+        if (message.startsWith("quit")) {
+            disconnect();
+        } else if (message.startsWith("play ")) {
+            String targetPlayer = message.substring(5);
+            server.sendInvitation(this, targetPlayer);
+        } else if (message.equalsIgnoreCase("yes") || message.equalsIgnoreCase("no")) {
+            server.handleResponse(this, message);
+        } else if (message.startsWith("column ")) {
+            try {
+                int column = Integer.parseInt(message.split(" ")[1]);
+                server.handleMove(this, column); // Envoie le mouvement au serveur
+            } catch (NumberFormatException e) {
+                send("Numéro de colonne invalide.");
+            }
+        } else if (message.equalsIgnoreCase("help")) {
+            send("Commandes disponibles : ");
+            send("1. play [pseudo] - Inviter un joueur à jouer.");
+            send("2. yes/no - Accepter ou refuser une invitation.");
+            send("3. column [numéro] - Jouer dans la colonne spécifiée.");
+            send("4. quit - Quitter le serveur.");
+        } else if (!message.isBlank()) {
+            server.broadcastMessage(pseudo, message);
+        } else {
+            send("Commande non reconnue.");
+        }
+    }
+
+    private void disconnect() {
+        try {
+            server.unregisterClient(this);
+            clientSocket.close();
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la déconnexion de " + pseudo);
+        }
+    }
+
+    public void send(String message) {
         out.println(message);
+    }
+
+    public String getPseudo() {
+        return pseudo;
     }
 }
