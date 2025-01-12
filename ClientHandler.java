@@ -19,7 +19,6 @@ public class ClientHandler extends Thread {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            out.println("Entrez votre pseudo :");
             pseudo = in.readLine();
             server.registerClient(this, pseudo);
 

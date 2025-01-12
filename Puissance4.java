@@ -23,19 +23,29 @@ public class Puissance4 {
     }
 
     public boolean makeMove(ClientHandler player, int column) {
-        if (column < 0 || column >= COLS) {
-            return false; // Colonne invalide
+        if ((player == player1 && !player1Turn) || (player == player2 && player1Turn)) {
+            player.send("Ce n'est pas votre tour !");
+            return false;
         }
-
+    
+        if (column < 0 || column >= COLS) {
+            player.send("Colonne invalide.");
+            return false;
+        }
+    
         for (int row = ROWS - 1; row >= 0; row--) {
             if (board[row][column].equals(".")) {
                 board[row][column] = player == player1 ? "X" : "O"; // X pour player1, O pour player2
-                player1Turn = !player1Turn;
+                player1Turn = !player1Turn; // Changer de joueur après un coup valide
                 return true;
             }
         }
-        return false; // La colonne est pleine
+    
+        // Si la colonne est pleine
+        player.send("Cette colonne est pleine, choisissez une autre colonne.");
+        return false;
     }
+    
 
     public void displayBoard() {
         for (int i = 0; i < ROWS; i++) {

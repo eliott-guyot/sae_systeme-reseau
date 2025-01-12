@@ -105,7 +105,7 @@ public class Serveur {
             client.send("[Chat] " + sender + ": " + message);
         }
     }
-
+    
     public static void main(String[] args) {
         Serveur serveur = new Serveur();
         serveur.demarrer(12345);
