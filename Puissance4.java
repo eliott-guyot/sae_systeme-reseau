@@ -99,4 +99,16 @@ public class Puissance4 {
     public ClientHandler getOpponent(ClientHandler player) {
         return player == player1 ? player2 : player1;
     }
+    public void endGame(ClientHandler winner) {
+        if (winner == player1) {
+            player1.incrementVictoire();
+            player2.incrementDefaite();
+        } else {
+            player1.incrementDefaite();
+            player2.incrementVictoire();
+        }
+        
+        player1.incrementPartie();
+        player2.incrementPartie();
+    }
 }

@@ -8,6 +8,12 @@ public class ClientHandler extends Thread {
     private BufferedReader in;
     private String pseudo;
 
+
+    // Historique des parties
+    private int totalParties=0;
+    private int victoires=0;
+    private int defaites=0;
+
     public ClientHandler(Socket clientSocket, Serveur server) {
         this.clientSocket = clientSocket;
         this.server = server;
@@ -53,22 +59,27 @@ public class ClientHandler extends Thread {
             send("1. play [pseudo] - Inviter un joueur à jouer.");
             send("2. yes/no - Accepter ou refuser une invitation.");
             send("3. column [numéro] - Jouer dans la colonne spécifiée.");
-            send("4. quit - Quitter le serveur.");
+            send("4. history - Afficher l'historique des parties.");
+            send("5. quit - Quitter le serveur.");
+
         } else if (!message.isBlank()) {
             server.broadcastMessage(pseudo, message);
-        } else {
+        }  else if (message.equalsIgnoreCase("history")) {
+            showHistory();}
+        else {
             send("Commande non reconnue.");
         }
     }
 
     private void disconnect() {
         try {
-            server.unregisterClient(this);
-            clientSocket.close();
+            server.unregisterClient(this); // Retirer le client du serveur
+            clientSocket.close(); // Fermer la connexion socket
         } catch (IOException e) {
             System.out.println("Erreur lors de la déconnexion de " + pseudo);
         }
     }
+    
 
     public void send(String message) {
         out.println(message);
@@ -76,5 +87,23 @@ public class ClientHandler extends Thread {
 
     public String getPseudo() {
         return pseudo;
+    }
+     public void incrementPartie() {
+        totalParties++;
+    }
+
+    public void incrementVictoire() {
+        victoires++;
+    }
+
+    public void incrementDefaite() {
+        defaites++;
+    }
+    // Méthode pour afficher l'historique des parties
+    public void showHistory() {
+        send("Historique des parties pour " + pseudo + ":");
+        send("Total parties jouées : " + totalParties);
+        send("Victoires : " + victoires);
+        send("Défaites : " + defaites);
     }
 }
