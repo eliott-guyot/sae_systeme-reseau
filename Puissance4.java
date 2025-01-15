@@ -22,20 +22,28 @@ public class Puissance4 {
         }
     }
 
-    public boolean makeMove(ClientHandler player, int column) {
+    public boolean makeMove(ClientHandler player, String column) {
         if ((player == player1 && !player1Turn) || (player == player2 && player1Turn)) {
             player.send("Ce n'est pas votre tour !");
             return false;
         }
-    
-        if (column < 0 || column >= COLS) {
+        Integer num_colonne;
+        
+        try {
+            num_colonne = Integer.valueOf(column);
+        } catch (Exception e) {
+            player.send("Ce n'est pas un numéro");
+            return false;
+        }
+
+        if (num_colonne < 0 || num_colonne >= COLS) {
             player.send("Colonne invalide.");
             return false;
         }
     
         for (int row = ROWS - 1; row >= 0; row--) {
-            if (board[row][column].equals(".")) {
-                board[row][column] = player == player1 ? "X" : "O"; // X pour player1, O pour player2
+            if (board[row][num_colonne].equals(".")) {
+                board[row][num_colonne] = player == player1 ? "X" : "O"; // X pour player1, O pour player2
                 player1Turn = !player1Turn; // Changer de joueur après un coup valide
                 return true;
             }

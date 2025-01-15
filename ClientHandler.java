@@ -43,11 +43,13 @@ public class ClientHandler extends Thread {
             server.handleResponse(this, message);
         } else if (message.startsWith("column ")) {
             try {
-                int column = Integer.parseInt(message.split(" ")[1]);
+                String column = message.split(" ")[1];
                 server.handleMove(this, column); // Envoie le mouvement au serveur
             } catch (NumberFormatException e) {
                 send("Numéro de colonne invalide.");
             }
+        } else if (message.startsWith("ff")) {
+            server.handleMove(this, "ff"); // Demande l'abandon
         } else if (message.equalsIgnoreCase("help")) {
             send("Commandes disponibles : ");
             send("1. play [pseudo] - Inviter un joueur à jouer.");

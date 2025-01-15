@@ -76,24 +76,40 @@ public class Serveur {
         game.displayBoard(); // Affiche le plateau de départ
     }
 
-    public synchronized void handleMove(ClientHandler player, int column) {
-        Puissance4 game = games.get(player);
-        if (game != null) {
-            boolean validMove = game.makeMove(player, column);
-            if (validMove) {
-                game.displayBoard(); // Affiche après chaque mouvement
-                if (game.checkWin(player)) {
-                    player.send("Vous avez gagné la partie!");
-                    game.getOpponent(player).send("Le joueur " + player.getPseudo() + " a gagné.");
-                    games.remove(player);
-                    games.remove(game.getOpponent(player));
+    public synchronized void handleMove(ClientHandler var1, String var2) {
+        // Si la commande est "ff", abandonner et donner la victoire à l'adversaire
+        if (var2.equalsIgnoreCase("ff")) {
+            Puissance4 var3 = (Puissance4)this.games.get(var1);
+            if (var3 != null) {
+                ClientHandler adversaire = var3.getOpponent(var1);
+                if (adversaire != null) {
+                    var1.send("Vous avez abandonné la partie. " + adversaire.getPseudo() + " gagne !");
+                    adversaire.send("L'adversaire " + var1.getPseudo() + " a abandonné. Vous avez gagné !");
+                    this.games.remove(var1);
+                    this.games.remove(adversaire);
+                }
+            }
+            return; // Sortir de la méthode pour ne pas traiter un mouvement classique
+        }
+
+        // Si ce n'est pas "ff", gérer un mouvement classique
+        Puissance4 var3 = (Puissance4)this.games.get(var1);
+        if (var3 != null) {
+            boolean var4 = var3.makeMove(var1, var2);
+            if (var4) {
+                var3.displayBoard();
+                if (var3.checkWin(var1)) {
+                    var1.send("Vous avez gagné la partie!");
+                    var3.getOpponent(var1).send("Le joueur " + var1.getPseudo() + " a gagné.");
+                    this.games.remove(var1);
+                    this.games.remove(var3.getOpponent(var1));
                 }
             } else {
-                player.send("Mouvement invalide, réessayez.");
+                var1.send("Mouvement invalide, réessayez.");
             }
         }
     }
-
+ 
     public synchronized void broadcast(String message) {
         for (ClientHandler client : clients.values()) {
             client.send(message);
