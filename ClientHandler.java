@@ -104,11 +104,12 @@ public class ClientHandler extends Thread {
         send("          *** MENU DES COMMANDES ***");
         send("===================================");
 
-        send("\n[1] play [pseudo]     - Inviter un joueur à jouer.");
+        send("\n[1] play [pseudo]    - Inviter un joueur à jouer.");
         send("[2] yes/no             - Accepter ou refuser une invitation.");
         send("[3] [numéro]           - Jouer dans la colonne spécifiée.");
-        send("[4] history            - Afficher l'historique des parties.");
-        send("[5] quit               - Quitter le serveur.");
+        send("[4] stat               - Afficher l'historique des parties.");
+        send("[5] ff                 - Abandonner la partie");
+        send("[6] quit               - Quitter le serveur.");
 
         send("\n===================================");
         send("  ** Utilisez les commandes ci-dessus pour interagir avec le serveur. **");
