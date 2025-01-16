@@ -8,6 +8,9 @@ public class Client {
     private BufferedReader in;
     private String pseudo;
     private Scanner scanner;
+    private int victoire;
+    private int defaite;
+    private int nul;
 
     public static void main(String[] args) {
         Client client = new Client();
@@ -45,6 +48,8 @@ public class Client {
                 String command = scanner.nextLine();
                 if (command.equals("quit")) {
                     out.println("quit");
+                    // Envoi d'une défaite pour l'autre joueur si on quitte volontairement
+                    out.println("defeat " + pseudo); // Mettre à jour les scores
                     break;
                 } else if (command.startsWith("play ")) {
                     out.println(command); // Envoi de la commande "play" pour inviter un joueur
@@ -57,6 +62,18 @@ public class Client {
                     } catch (NumberFormatException e) {
                         System.out.println("Veuillez entrer un numéro de colonne valide.");
                     }
+                } else if (command.equalsIgnoreCase("victory")) {
+                    out.println("victory " + pseudo); // Envoi de la victoire au serveur
+                    victoire++;
+                    System.out.println("Félicitations, vous avez gagné !");
+                } else if (command.equalsIgnoreCase("defeat")) {
+                    out.println("defeat " + pseudo); // Envoi de la défaite au serveur
+                    defaite++;
+                    System.out.println("Dommage, vous avez perdu.");
+                } else if (command.equalsIgnoreCase("draw")) {
+                    out.println("draw " + pseudo); // Envoi du match nul au serveur
+                    nul++;
+                    System.out.println("Match nul !");
                 } else {
                     // Si le message n'est pas une commande spéciale, l'envoyer comme un message de chat
                     out.println(command);

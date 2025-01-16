@@ -1,3 +1,9 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,6 +17,8 @@ public class Serveur {
     private Map<String, ClientHandler> clients = new HashMap<>();
     private Map<ClientHandler, ClientHandler> invitations = new HashMap<>();
     private Map<ClientHandler, Puissance4> games = new HashMap<>(); // Gérer les parties en cours
+    private static Map<String, int[]> scores = new HashMap<>();
+        private static final String FILE_NAME = "scores.json";
 
     public void demarrer(int port) {
         try {
@@ -53,6 +61,13 @@ public synchronized void unregisterClient(ClientHandler clientHandler) {
         } else {
             sender.send("Le joueur " + targetPlayer + " n'est pas disponible.");
         }
+    }
+
+    public static synchronized  Map<String, int[]> getScores() {
+        return scores;
+    }
+    public static synchronized void setScores(Map<String, int[]> newScores) {
+        scores = newScores;
     }
 
     public synchronized void handleResponse(ClientHandler responder, String response) {
@@ -135,10 +150,174 @@ private void sendAvailablePlayers(ClientHandler clientHandler) {
 
     clientHandler.send(playerList.toString()); // Envoi au client
 }
-    
+    private static void saveScores() {
+    StringBuilder fileContent = new StringBuilder();
 
-    public static void main(String[] args) {
-        Serveur serveur = new Serveur();
-        serveur.demarrer(12345);
+    // Lire le fichier existant
+    try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            fileContent.append(line);
+        }
+    } catch (FileNotFoundException e) {
+        System.out.println("Fichier non trouvé, un nouveau sera créé.");
+    } catch (IOException e) {
+        System.out.println("Erreur lors de la lecture du fichier JSON.");
+    }
+
+    // Charger les données existantes (si disponibles)
+    Map<String, int[]> existingScores = new HashMap<>();
+    if (fileContent.length() > 0) {
+        existingScores = parseJson(fileContent.toString());
+    }
+
+    // Mettre à jour les scores existants
+    for (Map.Entry<String, int[]> entry : scores.entrySet()) {
+        existingScores.put(entry.getKey(), entry.getValue());
+    }
+
+    // Générer le JSON final
+    String updatedJson = generateJson(existingScores);
+
+    // Écrire le contenu mis à jour dans le fichier
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+        writer.write(updatedJson);
+    } catch (IOException e) {
+        System.out.println("Erreur lors de la sauvegarde des scores.");
     }
 }
+
+private static Map<String, int[]> parseJson(String json) {
+    Map<String, int[]> parsedScores = new HashMap<>();
+    json = json.trim();
+    if (json.startsWith("{") && json.endsWith("}")) {
+        json = json.substring(1, json.length() - 1).trim(); // Supprimer les accolades
+
+        String[] entries = json.split("},");
+        for (String entry : entries) {
+            entry = entry.trim();
+            if (!entry.endsWith("}")) {
+                entry += "}";
+            }
+
+            String[] keyValue = entry.split(":", 2);
+            if (keyValue.length == 2) {
+                String key = keyValue[0].trim().replace("\"", "");
+                String value = keyValue[1].trim();
+
+                // Extraire les valeurs du tableau [defaites, nul, victoires]
+                value = value.replace("{", "").replace("}", "").trim();
+                String[] stats = value.split(",");
+                int[] intStats = new int[3];
+                for (int i = 0; i < stats.length; i++) {
+                    String[] statPair = stats[i].split(":");
+                    if (statPair.length == 2) {
+                        intStats[i] = Integer.parseInt(statPair[1].trim());
+                    }
+                }
+
+                parsedScores.put(key, intStats);
+            }
+        }
+    }
+    return parsedScores;
+}
+
+private static String generateJson(Map<String, int[]> scores) {
+    StringBuilder jsonBuilder = new StringBuilder("{\n");
+    for (Map.Entry<String, int[]> entry : scores.entrySet()) {
+        String pseudo = entry.getKey();
+        int[] stats = entry.getValue();
+
+        jsonBuilder.append("  \"").append(pseudo).append("\": {");
+        jsonBuilder.append("\"defaites\": ").append(stats[0]).append(", ");
+        jsonBuilder.append("\"nul\": ").append(stats[1]).append(", ");
+        jsonBuilder.append("\"victoires\": ").append(stats[2]).append("},\n");
+    }
+
+    // Supprimer la dernière virgule et ajouter une accolade fermante
+    if (jsonBuilder.length() > 2) {
+        jsonBuilder.setLength(jsonBuilder.length() - 2); // Supprimer la dernière virgule
+    }
+    jsonBuilder.append("\n}");
+
+    return jsonBuilder.toString();
+}
+public static void main(String[] args) {
+    Serveur serveur = new Serveur();
+
+    // Vérifier si le fichier de scores existe, sinon le créer
+    File scoreFile = new File(FILE_NAME);
+    if (!scoreFile.exists()) {
+        try {
+            if (scoreFile.createNewFile()) {
+                System.out.println("Fichier de scores créé : " + FILE_NAME);
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+                    writer.write("{}"); // Contenu JSON vide
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la création du fichier de scores : " + e.getMessage());
+        }
+    }
+
+    // Charger les scores à partir du fichier
+    StringBuilder fileContent = new StringBuilder();
+    try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            fileContent.append(line);
+        }
+
+        // Charger les scores depuis le JSON
+        if (fileContent.length() > 0) {
+            Map<String, int[]> loadedScores = parseJson(fileContent.toString());
+            setScores(loadedScores); // Mettre à jour les scores en mémoire
+            System.out.println("Scores chargés avec succès.");
+        } else {
+            System.out.println("Aucun score existant à charger.");
+        }
+    } catch (IOException e) {
+        System.out.println("Erreur lors de la lecture du fichier de scores : " + e.getMessage());
+    }
+
+    // Ajouter un hook de fermeture pour sauvegarder les scores avant la sortie
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+            System.out.println("Exécution du hook de fermeture...");
+            Serveur.saveScores();  // Sauvegarde avant la fermeture
+        }
+    });
+
+    
+    // Lancer le serveur
+    serveur.demarrer(12345);
+}
+
+        // Mettre à jour les scores
+    private void updateScores(String player, String opponent, String result) {
+        int[] playerScores = scores.get(player);
+        int[] opponentScores = scores.get(opponent);
+
+        switch (result) {
+            case "victory":
+                playerScores[2]++; // Victoires
+                opponentScores[0]++; // Défaites
+                break;
+            case "defeat":
+                playerScores[0]++; // Défaites
+                opponentScores[2]++; // Victoires
+                break;
+            case "draw":
+                playerScores[1]++; // Nuls
+                opponentScores[1]++; // Nuls
+                break;
+        }
+        saveScores();
+    }
+
+
+
+    }
+

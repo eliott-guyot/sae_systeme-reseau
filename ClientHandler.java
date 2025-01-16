@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 
 public class ClientHandler extends Thread {
     private Socket clientSocket;
@@ -24,10 +25,15 @@ public class ClientHandler extends Thread {
         try {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
             pseudo = in.readLine();
             server.registerClient(this, pseudo);
+            Map<String, int[]> currentScores = server.getScores();  
 
+            // Initialiser les scores du joueur si inexistant
+            if (!currentScores.containsKey(pseudo)) {
+                currentScores.put(pseudo, new int[]{0, 0, 0}); // [defaites, nuls, victoires]
+                System.out.println("Nouveau joueur ajouté avec des scores par défaut.");
+            }
             String message;
             while ((message = in.readLine()) != null) {
                 handleMessage(message);
@@ -99,11 +105,13 @@ public class ClientHandler extends Thread {
     public void incrementDefaite() {
         defaites++;
     }
-    // Méthode pour afficher l'historique des parties
+    // Afficher l'historique des scores pour le joueur actuel
     public void showHistory() {
+        Map<String, int[]> scores = server.getScores();
+        int[] playerScores = scores.getOrDefault(pseudo, new int[]{0, 0, 0});
         send("Historique des parties pour " + pseudo + ":");
-        send("Total parties jouées : " + totalParties);
-        send("Victoires : " + victoires);
-        send("Défaites : " + defaites);
+        send("Défaites : " + playerScores[0]);
+        send("Matchs nuls : " + playerScores[1]);
+        send("Victoires : " + playerScores[2]);
     }
 }
