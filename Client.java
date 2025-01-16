@@ -51,7 +51,8 @@ public class Client {
                 "  [1] play [pseudo]      - Inviter un joueur à jouer." +
                 "\n  [2] yes/no             - Accepter ou refuser une invitation." +
                 "\n  [3] [numéro]           - Jouer dans la colonne spécifiée." +
-                "\n  [4] quit               - Quitter le serveur." +
+                "\n  [4] stat               - stats du joueur." +
+                "\n  [5] quit               - Quitter le serveur." +
                 "\n\n" +
                 "===================================" +
                 "\n  ** Utilisez les commandes ci-dessus pour interagir avec le serveur. **" +
@@ -82,8 +83,14 @@ public class Client {
                     break;
                 } else if (command.startsWith("play ")) {
                     out.println(command);
-                } else if (command.equalsIgnoreCase("help")) {
+                } else if (command.equalsIgnoreCase("stat")) {
+                    out.println("stat");  // Envoie la commande 'stat' pour demander les stats
+                }
+                
+                
+                else if (command.equalsIgnoreCase("help")) {
                     out.println("help"); // Demander les commandes disponibles
+
                 } else if (command.startsWith("column ")) {
                     try {
                         int column = Integer.parseInt(command.split(" ")[1]);
