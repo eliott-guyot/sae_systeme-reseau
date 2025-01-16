@@ -147,29 +147,40 @@ public class Serveur {
                 if (opponent != null) {
                     player.send("Vous avez abandonné la partie. " + opponent.getPseudo() + " gagne !");
                     opponent.send("L'adversaire " + player.getPseudo() + " a abandonné. Vous avez gagné !");
+                    this.updateScores(player.getPseudo(), opponent.getPseudo(), "defeat");
                     this.games.remove(player);
                     this.games.remove(opponent);
                 }
             }
             return;
         }
-
+    
         Puissance4 game = this.games.get(player);
         if (game != null) {
             boolean isValidMove = game.makeMove(player, column);
             if (isValidMove) {
+                // Vérifie si le joueur a gagné
                 if (game.checkWin(player)) {
                     player.send("Vous avez gagné la partie!");
                     game.getOpponent(player).send("Le joueur " + player.getPseudo() + " a gagné.");
-                    game.endGame(player); 
-                    games.remove(player);
-                    games.remove(game.getOpponent(player));
+                    this.updateScores(player.getPseudo(), game.getOpponent(player).getPseudo(), "victory");
+                    this.games.remove(player);
+                    this.games.remove(game.getOpponent(player));
+                }
+                // Vérifie si la grille est pleine
+                else if (game.isGridFull()) {
+                    player.send("La grille est pleine ! Match nul.");
+                    game.getOpponent(player).send("La grille est pleine ! Match nul.");
+                    this.updateScores(player.getPseudo(), game.getOpponent(player).getPseudo(), "draw");
+                    this.games.remove(player);
+                    this.games.remove(game.getOpponent(player));
                 }
             } else {
                 player.send("Mouvement invalide, réessayez.");
             }
         }
     }
+    
 
 
     /**
@@ -361,28 +372,35 @@ public static void main(String[] args) {
 }
 
         // Mettre à jour les scores
-    private void updateScores(String player, String opponent, String result) {
-        int[] playerScores = scores.get(player);
-        int[] opponentScores = scores.get(opponent);
-
-        switch (result) {
-            case "victory":
-                playerScores[2]++; // Victoires
-                opponentScores[0]++; // Défaites
-                break;
-            case "defeat":
-                playerScores[0]++; // Défaites
-                opponentScores[2]++; // Victoires
-                break;
-            case "draw":
-                playerScores[1]++; // Nuls
-                opponentScores[1]++; // Nuls
-                break;
+        private void updateScores(String player, String opponent, String result) {
+            // Récupérer ou initialiser les scores
+            int[] playerScores = scores.getOrDefault(player, new int[]{0, 0, 0});
+            int[] opponentScores = scores.getOrDefault(opponent, new int[]{0, 0, 0});
+        
+            // Mettre à jour les scores selon le résultat
+            switch (result) {
+                case "victory":
+                    playerScores[2]++; // Victoires pour le joueur
+                    opponentScores[0]++; // Défaites pour l'adversaire
+                    break;
+                case "defeat":
+                    playerScores[0]++; // Défaites pour le joueur
+                    opponentScores[2]++; // Victoires pour l'adversaire
+                    break;
+                case "draw":
+                    playerScores[1]++; // Matchs nuls pour le joueur
+                    opponentScores[1]++; // Matchs nuls pour l'adversaire
+                    break;
+            }
+        
+            // Mettre à jour les scores dans la mémoire
+            scores.put(player, playerScores);
+            scores.put(opponent, opponentScores);
+        
+            // Sauvegarder les scores dans le fichier JSON
+            saveScores();
         }
-        saveScores();
-    }
-
-
+        
 
     }
 

@@ -3,6 +3,7 @@
  * Gère l'état de la grille, les mouvements des joueurs, et les conditions de victoire.
  */
 public class Puissance4 {
+    private int[][] grille; // Grille de jeu
     private static final int ROWS = 6;  // Nombre de lignes de la grille
     private static final int COLS = 7;  // Nombre de colonnes de la grille
     private String[][] board;  // Grille de jeu
@@ -20,6 +21,7 @@ public class Puissance4 {
      * @param server Le serveur qui gère la partie
      */
     public Puissance4(ClientHandler player1, ClientHandler player2, Serveur server) {
+        this.grille = new int[6][7]; // 6 lignes x 7 colonnes
         this.player1 = player1;
         this.player2 = player2;
         this.server = server;
@@ -86,6 +88,19 @@ public class Puissance4 {
 
         player.send("Cette colonne est pleine, choisissez une autre colonne.");
         return false;
+    }
+
+    /**
+     * indique si la grille est full
+     * @return boolean true si full et false sinon
+     */
+    public boolean isGridFull() {
+        for (int col = 0; col < grille[0].length; col++) {
+            if (grille[0][col] == 0) { // Si la première ligne de la colonne est vide
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
