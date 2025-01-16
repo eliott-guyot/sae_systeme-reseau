@@ -90,17 +90,21 @@ public class ClientHandler extends Thread {
             send("\n[1] play [pseudo]     - Inviter un joueur à jouer.");
             send("[2] yes/no             - Accepter ou refuser une invitation.");
             send("[3] [numéro]           - Jouer dans la colonne spécifiée.");
-            send("[4] history            - Afficher l'historique des parties.");
+            send("[4] stat            - Afficher les statistiques des parties.");
             send("[5] quit               - Quitter le serveur.");
         
             send("\n===================================");
             send("  ** Utilisez les commandes ci-dessus pour interagir avec le serveur. **");
             send("===================================\n");
 
-        } else if (!message.isBlank()) {
-            server.broadcastMessage(pseudo, message);
-            
-        } else {
+        } else if (message.equalsIgnoreCase("stat")) {
+            showHistory();  // Cette méthode affiche l'historique du joueur
+        }
+        
+        else if (!message.isBlank()) {
+            server.broadcastMessage(pseudo, message);   
+        } 
+        else {
             send("Commande non reconnue.");
         }
     }
@@ -116,6 +120,8 @@ public class ClientHandler extends Thread {
             System.out.println("Erreur lors de la déconnexion de " + pseudo);
         }
     }
+
+
 
     /**
      * Envoie un message au client via le flux de sortie.
@@ -145,13 +151,14 @@ public class ClientHandler extends Thread {
     public void incrementDefaite() {
         defaites++;
     }
-    // Afficher l'historique des scores pour le joueur actuel
     public void showHistory() {
-        Map<String, int[]> scores = server.getScores();
-        int[] playerScores = scores.getOrDefault(pseudo, new int[]{0, 0, 0});
+        Map<String, int[]> scores = server.getScores(); // Récupère la map des scores
+        int[] playerScores = scores.getOrDefault(pseudo, new int[]{0, 0, 0}); // Récupère les scores du joueur
         send("Historique des parties pour " + pseudo + ":");
         send("Défaites : " + playerScores[0]);
         send("Matchs nuls : " + playerScores[1]);
         send("Victoires : " + playerScores[2]);
     }
+    
+
 }
