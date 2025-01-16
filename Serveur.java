@@ -140,32 +140,35 @@ public class Serveur {
      * @param column la colonne où le joueur veut jouer.
      */
     public synchronized void handleMove(ClientHandler player, String column) {
+        Puissance4 game = this.games.get(player);
+        ClientHandler opponent = game.getOpponent(player);
         if (column.equalsIgnoreCase("ff")) {
-            Puissance4 game = this.games.get(player);
             if (game != null) {
-                ClientHandler opponent = game.getOpponent(player);
                 if (opponent != null) {
                     player.send("Vous avez abandonné la partie. " + opponent.getPseudo() + " gagne !");
                     opponent.send("L'adversaire " + player.getPseudo() + " a abandonné. Vous avez gagné !");
                     this.updateScores(player.getPseudo(), opponent.getPseudo(), "defeat");
                     this.games.remove(player);
                     this.games.remove(opponent);
+                    player.afficherMenu();
+                    opponent.afficherMenu();
                 }
             }
             return;
         }
     
-        Puissance4 game = this.games.get(player);
         if (game != null) {
             boolean isValidMove = game.makeMove(player, column);
             if (isValidMove) {
                 // Vérifie si le joueur a gagné
                 if (game.checkWin(player)) {
                     player.send("Vous avez gagné la partie!");
-                    game.getOpponent(player).send("Le joueur " + player.getPseudo() + " a gagné.");
+                    opponent.send("Le joueur " + player.getPseudo() + " a gagné.");
                     this.updateScores(player.getPseudo(), game.getOpponent(player).getPseudo(), "victory");
                     this.games.remove(player);
-                    this.games.remove(game.getOpponent(player));
+                    this.games.remove(opponent);
+                    player.afficherMenu();
+                    opponent.afficherMenu();
                 }
                 // Vérifie si la grille est pleine
                 else if (game.isGridFull()) {
@@ -173,7 +176,9 @@ public class Serveur {
                     game.getOpponent(player).send("La grille est pleine ! Match nul.");
                     this.updateScores(player.getPseudo(), game.getOpponent(player).getPseudo(), "draw");
                     this.games.remove(player);
-                    this.games.remove(game.getOpponent(player));
+                    this.games.remove(opponent);
+                    player.afficherMenu();
+                    opponent.afficherMenu();
                 }
             } else {
                 player.send("Mouvement invalide, réessayez.");
