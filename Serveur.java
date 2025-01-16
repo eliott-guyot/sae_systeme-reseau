@@ -89,12 +89,6 @@ public class Serveur {
         scores = newScores;
     }
 
-    public static synchronized  Map<String, int[]> getScores() {
-        return scores;
-    }
-    public static synchronized void setScores(Map<String, int[]> newScores) {
-        scores = newScores;
-    }
 
     /**
      * Gère la réponse à une invitation de jeu (acceptation ou refus).
