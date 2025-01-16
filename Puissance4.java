@@ -27,6 +27,7 @@ public class Puissance4 {
             player.send("Ce n'est pas votre tour !");
             return false;
         }
+
         Integer num_colonne;
         
         try {
@@ -44,24 +45,42 @@ public class Puissance4 {
         for (int row = ROWS - 1; row >= 0; row--) {
             if (board[row][num_colonne].equals(".")) {
                 board[row][num_colonne] = player == player1 ? "X" : "O"; // X pour player1, O pour player2
-                player1Turn = !player1Turn; // Changer de joueur après un coup valide
+                player1Turn = !player1Turn;
+
+                // Afficher la grille à chaque tour
+                displayBoard();
+
+                // Indiquer à chaque joueur qui doit jouer
+                if (player1Turn) {
+                    player1.send("C'est à vous de jouer.");
+                    player2.send("C'est à " + player1.getPseudo() + " de jouer.");
+                } else {
+                    player2.send("C'est à vous de jouer.");
+                    player1.send("C'est à " + player2.getPseudo() + " de jouer.");
+                }
+
                 return true;
             }
         }
     
-        // Si la colonne est pleine
         player.send("Cette colonne est pleine, choisissez une autre colonne.");
         return false;
     }
-    
 
+    /**
+     * Affiche la grille dans les clients
+     */
     public void displayBoard() {
+        StringBuilder boardString = new StringBuilder();
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
-                System.out.print(board[i][j] + " ");
+                boardString.append(board[i][j]).append(" ");
             }
-            System.out.println();
+            boardString.append("\n");
         }
+        // Envoie la grille aux deux joueurs
+        player1.send(boardString.toString());
+        player2.send(boardString.toString());
     }
 
     public boolean checkWin(ClientHandler player) {
@@ -106,5 +125,9 @@ public class Puissance4 {
 
     public ClientHandler getOpponent(ClientHandler player) {
         return player == player1 ? player2 : player1;
+    }
+
+    public ClientHandler getCurrentPlayer() {
+        return player1Turn ? player1 : player2;
     }
 }

@@ -25,7 +25,7 @@ public class Client {
             System.out.println("Entrez votre pseudo :");
             pseudo = scanner.nextLine();
             out.println(pseudo); // Envoi du pseudo au serveur
-            System.out.println("Commandes disponibles : \n 1. play [pseudo] - Inviter un joueur à jouer. \n 2. yes/no - Accepter ou refuser une invitation. \n 3. column [numéro] - Jouer dans la colonne spécifiée. \n 4. quit - Quitter le serveur.");
+            System.out.println("Commandes disponibles : \n 1. play [pseudo] - Inviter un joueur à jouer. \n 2. yes/no - Accepter ou refuser une invitation. \n 3. [numéro] - Jouer dans la colonne spécifiée. \n 4. quit - Quitter le serveur.");
 
             // Démarrer un thread pour écouter les messages du serveur
             Thread listener = new Thread(() -> {
@@ -43,6 +43,8 @@ public class Client {
             // Lire les commandes de l'utilisateur et les envoyer au serveur
             while (true) {
                 String command = scanner.nextLine();
+
+                // Si la commande est "quit", quitter la partie
                 if (command.equals("quit")) {
                     out.println("quit");
                     break;
@@ -50,20 +52,28 @@ public class Client {
                     out.println(command); // Envoi de la commande "play" pour inviter un joueur
                 } else if (command.equalsIgnoreCase("help")) {
                     out.println("help"); // Demander les commandes disponibles
-                } else if (command.startsWith("column ")) {
-                    try {
-                        int column = Integer.parseInt(command.split(" ")[1]);
-                        out.println("column " + column); // Jouer un coup dans la colonne spécifiée
-                    } catch (NumberFormatException e) {
-                        System.out.println("Veuillez entrer un numéro de colonne valide.");
-                    }
+                } else if (command.equalsIgnoreCase("yes") || command.equalsIgnoreCase("no")) {
+                    out.println(command); // Réponse à une invitation
+                } else if (isNumeric(command)) {
+                    // Si le message est un numéro valide, c'est un numéro de colonne
+                    out.println(command); // Envoi du numéro de colonne directement
                 } else {
-                    // Si le message n'est pas une commande spéciale, l'envoyer comme un message de chat
+                    // Si ce n'est pas un nombre, envoyer comme message normal
                     out.println(command);
                 }
             }
         } catch (IOException e) {
             System.out.println("Erreur de connexion au serveur.");
+        }
+    }
+
+    // Méthode pour vérifier si une chaîne de caractères est un nombre entier valide
+    private boolean isNumeric(String str) {
+        try {
+            Integer.parseInt(str); // Essayer de convertir la chaîne en entier
+            return true; // Si la conversion réussit, c'est un nombre
+        } catch (NumberFormatException e) {
+            return false; // Si une exception est levée, ce n'est pas un nombre
         }
     }
 }

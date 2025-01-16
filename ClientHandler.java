@@ -36,28 +36,31 @@ public class ClientHandler extends Thread {
     private void handleMessage(String message) {
         if (message.startsWith("quit")) {
             disconnect();
+
         } else if (message.startsWith("play ")) {
             String targetPlayer = message.substring(5);
             server.sendInvitation(this, targetPlayer);
+
         } else if (message.equalsIgnoreCase("yes") || message.equalsIgnoreCase("no")) {
             server.handleResponse(this, message);
-        } else if (message.startsWith("column ")) {
-            try {
-                String column = message.split(" ")[1];
-                server.handleMove(this, column); // Envoie le mouvement au serveur
-            } catch (NumberFormatException e) {
-                send("Numéro de colonne invalide.");
-            }
+
+        } else if (message.matches("\\d+")) { // Si le message est un numéro, c'est un mouvement
+            String column = message;
+            server.handleMove(this, column); // Envoie le mouvement au serveur
+
         } else if (message.startsWith("ff")) {
             server.handleMove(this, "ff"); // Demande l'abandon
+
         } else if (message.equalsIgnoreCase("help")) {
             send("Commandes disponibles : ");
             send("1. play [pseudo] - Inviter un joueur à jouer.");
             send("2. yes/no - Accepter ou refuser une invitation.");
-            send("3. column [numéro] - Jouer dans la colonne spécifiée.");
+            send("3. [numéro] - Jouer dans la colonne spécifiée.");
             send("4. quit - Quitter le serveur.");
+
         } else if (!message.isBlank()) {
             server.broadcastMessage(pseudo, message);
+            
         } else {
             send("Commande non reconnue.");
         }
