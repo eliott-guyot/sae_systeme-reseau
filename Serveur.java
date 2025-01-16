@@ -10,6 +10,12 @@ public class Serveur {
     private Map<ClientHandler, ClientHandler> invitations = new HashMap<>();
     private Map<ClientHandler, Puissance4> games = new HashMap<>();
 
+    /**
+     * Démarre le serveur sur un port spécifié.
+     * Accepte les connexions entrantes et crée un handler pour chaque client.
+     * 
+     * @param port le port sur lequel le serveur écoute les connexions.
+     */
     public void demarrer(int port) {
         try {
             serverSocket = new ServerSocket(port);
@@ -26,17 +32,34 @@ public class Serveur {
         }
     }
 
+    /**
+     * Enregistre un client dans le serveur.
+     * 
+     * @param clientHandler le handler du client à enregistrer.
+     * @param pseudo le pseudo du client.
+     */
     public synchronized void registerClient(ClientHandler clientHandler, String pseudo) {
         clients.put(pseudo, clientHandler);
         broadcast("[" + pseudo + "] a rejoint le serveur.");
     }
 
+    /**
+     * Désenregistre un client du serveur et le retire des jeux en cours.
+     * 
+     * @param clientHandler le handler du client à désenregistrer.
+     */
     public synchronized void unregisterClient(ClientHandler clientHandler) {
         clients.remove(clientHandler.getPseudo());
         games.remove(clientHandler); // Supprimer le jeu si le client se déconnecte
         broadcast("[" + clientHandler.getPseudo() + "] a quitté le serveur.");
     }
 
+    /**
+     * Envoie une invitation de jeu à un autre joueur.
+     * 
+     * @param sender le joueur qui envoie l'invitation.
+     * @param targetPlayer le pseudo du joueur cible pour l'invitation.
+     */
     public synchronized void sendInvitation(ClientHandler sender, String targetPlayer) {
         ClientHandler target = clients.get(targetPlayer);
         if (target != null) {
@@ -48,6 +71,12 @@ public class Serveur {
         }
     }
 
+    /**
+     * Gère la réponse à une invitation de jeu (acceptation ou refus).
+     * 
+     * @param responder le joueur qui répond à l'invitation.
+     * @param response la réponse du joueur ("yes" ou "no").
+     */
     public synchronized void handleResponse(ClientHandler responder, String response) {
         ClientHandler inviter = invitations.get(responder);
         if (inviter != null) {
@@ -65,6 +94,12 @@ public class Serveur {
         }
     }
 
+    /**
+     * Démarre une nouvelle partie de Puissance 4 entre deux joueurs.
+     * 
+     * @param player1 le premier joueur.
+     * @param player2 le deuxième joueur.
+     */
     private void startGame(ClientHandler player1, ClientHandler player2) {
         player1.send("La partie commence contre " + player2.getPseudo());
         player2.send("La partie commence contre " + player1.getPseudo());
@@ -78,8 +113,14 @@ public class Serveur {
         game.displayBoard();
     }
 
+    /**
+     * Gère un mouvement effectué par un joueur pendant une partie.
+     * Si le joueur choisit de quitter, l'adversaire est déclaré gagnant.
+     * 
+     * @param player le joueur effectuant le mouvement.
+     * @param column la colonne où le joueur veut jouer.
+     */
     public synchronized void handleMove(ClientHandler player, String column) {
-        // Si la commande est "ff", abandonner et donner la victoire à l'adversaire
         if (column.equalsIgnoreCase("ff")) {
             Puissance4 game = this.games.get(player);
             if (game != null) {
@@ -94,7 +135,6 @@ public class Serveur {
             return;
         }
 
-        // Si ce n'est pas "ff", gérer un mouvement classique
         Puissance4 game = this.games.get(player);
         if (game != null) {
             boolean isValidMove = game.makeMove(player, column);
@@ -111,18 +151,34 @@ public class Serveur {
         }
     }
 
+    /**
+     * Envoie un message à tous les clients connectés.
+     * 
+     * @param message le message à diffuser.
+     */
     public synchronized void broadcast(String message) {
         for (ClientHandler client : clients.values()) {
             client.send(message);
         }
     }
 
+    /**
+     * Envoie un message de chat à tous les clients connectés.
+     * 
+     * @param sender le nom du joueur qui envoie le message.
+     * @param message le message de chat à diffuser.
+     */
     public synchronized void broadcastMessage(String sender, String message) {
         for (ClientHandler client : clients.values()) {
             client.send("[Chat] " + sender + ": " + message);
         }
     }
 
+    /**
+     * Point d'entrée du programme, démarre le serveur sur le port spécifié.
+     * 
+     * @param args arguments en ligne de commande (non utilisés ici).
+     */
     public static void main(String[] args) {
         Serveur serveur = new Serveur();
         serveur.demarrer(12345);
