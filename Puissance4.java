@@ -1,12 +1,24 @@
+/**
+ * Classe représentant une partie de Puissance 4 entre deux joueurs.
+ * Gère l'état de la grille, les mouvements des joueurs, et les conditions de victoire.
+ */
 public class Puissance4 {
-    private static final int ROWS = 6;
-    private static final int COLS = 7;
-    private String[][] board;
-    private ClientHandler player1;
-    private ClientHandler player2;
-    private Serveur server;
-    private boolean player1Turn;
+    private static final int ROWS = 6;  // Nombre de lignes de la grille
+    private static final int COLS = 7;  // Nombre de colonnes de la grille
+    private String[][] board;  // Grille de jeu
+    private ClientHandler player1;  // Joueur 1
+    private ClientHandler player2;  // Joueur 2
+    private Serveur server;  // Serveur auquel la partie est liée
+    private boolean player1Turn;  // Indique si c'est le tour du joueur 1
 
+    /**
+     * Constructeur de la classe Puissance4 qui initialise la partie avec les deux joueurs et le serveur.
+     * Initialise également la grille de jeu avec des cases vides.
+     * 
+     * @param player1 Le premier joueur
+     * @param player2 Le second joueur
+     * @param server Le serveur qui gère la partie
+     */
     public Puissance4(ClientHandler player1, ClientHandler player2, Serveur server) {
         this.player1 = player1;
         this.player2 = player2;
@@ -14,7 +26,7 @@ public class Puissance4 {
         this.board = new String[ROWS][COLS];
         this.player1Turn = true;
 
-        // Initialisation du tableau de jeu
+        // Initialisation du tableau de jeu avec des cases vides
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 board[i][j] = ".";
@@ -22,42 +34,86 @@ public class Puissance4 {
         }
     }
 
-    public boolean makeMove(ClientHandler player, int column) {
+    /**
+     * Effectue un mouvement dans une colonne donnée par le joueur.
+     * Vérifie si le joueur joue à son tour, si la colonne est valide, et si elle n'est pas pleine.
+     * 
+     * @param player Le joueur qui effectue le mouvement
+     * @param column La colonne dans laquelle le joueur veut jouer
+     * @return true si le mouvement est valide, false sinon
+     */
+    public boolean makeMove(ClientHandler player, String column) {
+        // Vérifier si c'est le tour du joueur
         if ((player == player1 && !player1Turn) || (player == player2 && player1Turn)) {
             player.send("Ce n'est pas votre tour !");
             return false;
         }
-    
-        if (column < 0 || column >= COLS) {
+
+        Integer num_colonne;
+        try {
+            num_colonne = Integer.valueOf(column);  // Convertir la colonne en entier
+        } catch (Exception e) {
+            player.send("Ce n'est pas un numéro");
+            return false;
+        }
+
+        // Vérifier si la colonne est valide
+        if (num_colonne < 0 || num_colonne >= COLS) {
             player.send("Colonne invalide.");
             return false;
         }
-    
+
+        // Chercher la première ligne vide de la colonne
         for (int row = ROWS - 1; row >= 0; row--) {
-            if (board[row][column].equals(".")) {
-                board[row][column] = player == player1 ? "X" : "O"; // X pour player1, O pour player2
-                player1Turn = !player1Turn; // Changer de joueur après un coup valide
+            if (board[row][num_colonne].equals(".")) {
+                board[row][num_colonne] = player == player1 ? "X" : "O";  // "X" pour player1, "O" pour player2
+                player1Turn = !player1Turn;  // Changer de tour
+
+                displayBoard();  // Afficher la grille après chaque mouvement
+
+                // Indiquer à chaque joueur qui doit jouer
+                if (player1Turn) {
+                    player1.send("C'est à vous de jouer.");
+                    player2.send("C'est à " + player1.getPseudo() + " de jouer.");
+                } else {
+                    player2.send("C'est à vous de jouer.");
+                    player1.send("C'est à " + player2.getPseudo() + " de jouer.");
+                }
+
                 return true;
             }
         }
-    
-        // Si la colonne est pleine
+
         player.send("Cette colonne est pleine, choisissez une autre colonne.");
         return false;
     }
-    
 
+    /**
+     * Affiche la grille de jeu actuelle aux deux joueurs.
+     * La grille est envoyée sous forme de texte.
+     */
     public void displayBoard() {
+        StringBuilder boardString = new StringBuilder();
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
-                System.out.print(board[i][j] + " ");
+                boardString.append(board[i][j]).append(" ");
             }
-            System.out.println();
+            boardString.append("\n");
         }
+        // Envoie la grille aux deux joueurs
+        player1.send(boardString.toString());
+        player2.send(boardString.toString());
     }
 
+    /**
+     * Vérifie si un joueur a gagné en vérifiant les alignements horizontaux, verticaux et diagonaux.
+     * 
+     * @param player Le joueur à vérifier
+     * @return true si le joueur a gagné, false sinon
+     */
     public boolean checkWin(ClientHandler player) {
-        String token = player == player1 ? "X" : "O";
+        String token = player == player1 ? "X" : "O";  // Choisir le symbole du joueur (X ou O)
+        
         // Vérification horizontale, verticale et diagonale
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
@@ -96,9 +152,25 @@ public class Puissance4 {
         return false;
     }
 
+    /**
+     * Récupère l'adversaire d'un joueur.
+     * 
+     * @param player Le joueur dont on veut connaître l'adversaire
+     * @return L'adversaire du joueur
+     */
     public ClientHandler getOpponent(ClientHandler player) {
         return player == player1 ? player2 : player1;
     }
+
+    /**
+     * Récupère le joueur qui doit jouer actuellement.
+     * 
+     * @return Le joueur dont c'est le tour
+     */
+    public ClientHandler getCurrentPlayer() {
+        return player1Turn ? player1 : player2;
+    }
+    
     public void endGame(ClientHandler winner) {
         if (winner == player1) {
             player1.incrementVictoire();
