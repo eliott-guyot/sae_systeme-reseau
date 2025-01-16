@@ -44,8 +44,20 @@ public class Client {
             pseudo = scanner.nextLine();
             out.println(pseudo); // Envoi du pseudo au serveur
             System.out.println(
-                    "Commandes disponibles : \n 1. play [pseudo] - Inviter un joueur à jouer. \n 2. yes/no - Accepter ou refuser une invitation. \n 3. [numéro] - Jouer dans la colonne spécifiée. \n 4. quit - Quitter le serveur.");
-
+                "\n===================================" +
+                "\n          *** MENU DES COMMANDES ***" +
+                "\n===================================" +
+                "\n\n" +
+                "  [1] play [pseudo]      - Inviter un joueur à jouer." +
+                "\n  [2] yes/no             - Accepter ou refuser une invitation." +
+                "\n  [3] [numéro]           - Jouer dans la colonne spécifiée." +
+                "\n  [4] quit               - Quitter le serveur." +
+                "\n\n" +
+                "===================================" +
+                "\n  ** Utilisez les commandes ci-dessus pour interagir avec le serveur. **" +
+                "\n===================================" 
+        );
+        
             // Démarrer un thread pour écouter les messages du serveur
             Thread listener = new Thread(() -> {
                 try {

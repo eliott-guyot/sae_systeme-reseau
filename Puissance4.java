@@ -109,17 +109,32 @@ public class Puissance4 {
      */
     public void displayBoard() {
         StringBuilder boardString = new StringBuilder();
+    
+        // Affichage des indices de colonnes
+        boardString.append("   1   2   3   4   5   6   7\n");
+    
+        // Affichage de la grille ligne par ligne
         for (int i = 0; i < ROWS; i++) {
+            boardString.append("  +---+---+---+---+---+---+---+\n");
             for (int j = 0; j < COLS; j++) {
-                boardString.append(board[i][j]).append(" ");
+                // Si la case est vide, afficher un espace, sinon afficher X ou O
+                String cell = (board[i][j] == null) ? " " : board[i][j];
+                boardString.append("  " + cell + " ");
+                if (j < COLS - 1) {
+                    boardString.append("|");  // Séparateur entre les cases
+                }
             }
             boardString.append("\n");
         }
+    
+        // Affichage de la bordure inférieure
+        boardString.append("  +---+---+---+---+---+---+---+\n");
+    
         // Envoie la grille aux deux joueurs
         player1.send(boardString.toString());
         player2.send(boardString.toString());
     }
-
+    
     /**
      * Vérifie si un joueur a gagné en vérifiant les alignements horizontaux, verticaux et diagonaux.
      * 
