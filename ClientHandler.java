@@ -83,12 +83,19 @@ public class ClientHandler extends Thread {
             server.handleMove(this, "ff");
 
         } else if (message.equalsIgnoreCase("help")) {
-            send("Commandes disponibles : ");
-            send("1. play [pseudo] - Inviter un joueur à jouer.");
-            send("2. yes/no - Accepter ou refuser une invitation.");
-            send("3. [numéro] - Jouer dans la colonne spécifiée.");
-            send("4. history - Afficher l'historique des parties.");
-            send("5. quit - Quitter le serveur.");
+            send("\n===================================");
+            send("          *** MENU DES COMMANDES ***");
+            send("===================================");
+        
+            send("\n[1] play [pseudo]     - Inviter un joueur à jouer.");
+            send("[2] yes/no             - Accepter ou refuser une invitation.");
+            send("[3] [numéro]           - Jouer dans la colonne spécifiée.");
+            send("[4] history            - Afficher l'historique des parties.");
+            send("[5] quit               - Quitter le serveur.");
+        
+            send("\n===================================");
+            send("  ** Utilisez les commandes ci-dessus pour interagir avec le serveur. **");
+            send("===================================\n");
 
         } else if (!message.isBlank()) {
             server.broadcastMessage(pseudo, message);
