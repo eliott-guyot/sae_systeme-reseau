@@ -22,9 +22,25 @@ public class Client {
      * Crée une instance de Client et appelle la méthode start pour commencer la
      * communication.
      */
-    public static void main(String[] args) {
+
+     public static void main(String[] args) {
+        String serverAddress = "localhost"; // Adresse par défaut
+        int serverPort = 12345; // Port par défaut
+
+        // Vérification des arguments de la ligne de commande
+        if (args.length >= 1) {
+            serverAddress = args[0]; // Récupère l'adresse IP
+        }
+        if (args.length >= 2) {
+            try {
+                serverPort = Integer.parseInt(args[1]); // Récupère le port
+            } catch (NumberFormatException e) {
+                System.err.println("Port invalide. Utilisation du port par défaut : " + serverPort);
+            }
+        }
+
         Client client = new Client();
-        client.start();
+        client.start(serverAddress, serverPort); // Passe l'adresse et le port à la méthode start
     }
 
     /**
@@ -33,13 +49,15 @@ public class Client {
      * Cette méthode établit la connexion au serveur, envoie et reçoit des messages,
      * et lance un thread pour écouter les messages du serveur en temps réel.
      */
-    public void start() {
+    public void start(String serverAddress, int serverPort) {
         try {
-            socket = new Socket("localhost", 12345); // Connexion au serveur (adresse et port à ajuster)
+            socket = new Socket(serverAddress, serverPort); // Utilise les paramètres
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             scanner = new Scanner(System.in);
 
+            System.out.println("Connecté au serveur " + serverAddress + " sur le port " + serverPort);
+            
             System.out.println("Entrez votre pseudo :");
             pseudo = scanner.nextLine();
             out.println(pseudo); // Envoi du pseudo au serveur
