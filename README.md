@@ -4,8 +4,9 @@ Ce projet implémente le jeu classique du Puissance 4 en Java, avec une architec
 
 ## Prérequis
 
-*   Java Development Kit (JDK) 8 ou supérieur (testé avec JDK 17)
+*   Java
 *   Un environnement de développement Java (IDE) comme IntelliJ IDEA ou Eclipse (recommandé, mais pas obligatoire)
+*   Être sous environnement Linux
 
 ## Installation
 
