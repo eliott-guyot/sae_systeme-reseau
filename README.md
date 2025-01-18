@@ -25,21 +25,21 @@ Le jeu fonctionne avec une architecture client-serveur. Vous devez d'abord lance
 
 1.  **Lancer le serveur :**
     ```bash
-    java bin/Serveur
+    java -cp bin Serveur
     ```
     Le serveur affichera un message indiquant qu'il est en écoute sur un port (par défaut, il utilise souvent le port 5000).
 
 2.  **Lancer les clients :**
     Ouvrez un nouveau terminal pour chaque client et exécutez la commande suivante :
     ```bash
-    java bin/Client <adresse_IP_du_serveur> <port_du_serveur>
+    java -cp bin Client <adresse_IP_du_serveur> <port_du_serveur>
     ```
-    *   `<adresse_IP_du_serveur>` : L'adresse IP de la machine où le serveur est exécuté (par exemple, `127.0.0.1` pour localhost si le serveur est sur la même machine).
-    *   `<port_du_serveur>` : Le port sur lequel le serveur écoute (par exemple, `5000`).
+    *   `<adresse_IP_du_serveur>` : L'adresse IP de la machine où le serveur est exécuté (par exemple, `127.0.0.1` pour localhost si le serveur est sur la même machine). Par défaut c'est `localhost`.
+    *   `<port_du_serveur>` : Le port sur lequel le serveur écoute (par exemple, `5000`). Par défaut c'est `12345`.
 
     Exemple (si le serveur est sur la même machine) :
     ```bash
-    java bin/Client 127.0.0.1 5000
+    java -cp bin Client
     ```
     Deux terminaux distincts devront exécuter cette commande pour que deux joueurs puissent se connecter.
 
